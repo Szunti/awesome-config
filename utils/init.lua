@@ -31,7 +31,7 @@ end
 -- run function in background and gives output to funtocall after the program terminated,
 --    along with farg and a table with info about the command like
 --    funtocall(output, farg, proc_info), where
---     proc_info = { cmd = ..., file = logfile, pid = pid_of_the_background_process, timer = #timer_object, time = elapsed_time_since_start }
+--     proc_info = { cmd = ..., file = logfile (deleted already at functoin call), pid = pid_of_the_background_process, timer = #timer_object, time = elapsed_time_since_start }
 -- wait for timeout time, nil means infinite, if it's over send TERM to process, and after 2 sec send KILL or call
 -- timeout_func(farg, proc_info) instead if it's not nil
 -- poll_freq every freq seconds for process termination, default is 1
