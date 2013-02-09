@@ -24,24 +24,24 @@ local menulauncher = awful.widget.launcher({ image = beautiful.awesome_icon,
 
 -- date and clock
 local date_text = wibox.widget.textbox()
-vicious.register(date_text, vicious.widgets.date, "%a %b %d, %R")
+vicious.register(date_text, vicious.widgets.date, "%a %b %d, %R", 11)
 local datewidget = wibox.layout.margin(date_text, 5, 5)
 
 local cpuwidgets = {}
-local cpu_count = 8
+local cpu_count = 2
 for i = 1, cpu_count do
    local cw = awful.widget.progressbar( { width = 6 })
    cw:set_background_color( beautiful.bg_normal )
    cw:set_color("#FF5656")
    cw:set_border_color(nil)
    cw:set_vertical(true)
-   vicious.register(cw, vicious.widgets.cpu, "$" .. (i+1), 1)
+   vicious.register(cw, vicious.widgets.cpu, "$" .. (i+1), 2)
    table.insert(cpuwidgets, cw)
 end
 -- Cache else would got wrong values, cause widget gives the cpu usage between subsequent calls
 vicious.cache(vicious.widgets.cpu)
 
-local remote_text = wibox.widget.textbox()
+--[[ local remote_text = wibox.widget.textbox()
 vicious.register(remote_text, vicious.widgets.stdout,
 		 function (w, args)
 		    return string.gsub("<b>t1</b>:$1  <b>t2</b>:$2  <b>t3</b>:$3", "$(%d+)",
@@ -94,7 +94,7 @@ vicious.register(remote_text, vicious.widgets.stdout,
 local remotewidget = wibox.layout.margin(remote_text, 5, 5)
 
 -- }}}
-
+--]]
 -- keybindings, mousebutton bindings
 local taglist_buttons = awful.util.table.join(
                         awful.button({ }, 1, awful.tag.viewonly),
@@ -139,6 +139,46 @@ local tasklist_buttons = awful.util.table.join(
 						if client.focus then client.focus:raise() end
 					      end))
 
+-- mpd widget
+local mpd_text = wibox.widget.textbox()
+local mpdwidget = wibox.layout.margin(mpd_text)
+-- functions to hide/show the widget, we need them because even if the
+-- text is "" there is the margin, wibox.widget.textbox() gives a
+-- table, so we can add the functions to that
+mpd_text.margin_widget = mpdwidget
+mpd_text.margin = { left = 5, right = 5 }
+function mpd_text:hide()
+   self.margin_widget:set_margins(0)
+end
+function mpd_text:show()
+   self.margin_widget:set_left(self.margin.left)
+   self.margin_widget:set_right(self.margin.right)
+end
+
+vicious.register(mpd_text, vicious.widgets.mpd,
+                 function (widget, args)
+                    local s = args["{state}"]
+                    if s == "Stop" or s == "N/A" then
+		       widget:hide()
+		       return ""
+                    else
+		       widget:show()
+		       if (args["{Artist}"] == "N/A" or 
+			   args["{Title}"] == "N/A") then
+			  return '<span color="white">MPD:</span> '..
+			     string.match(args["{file}"], "([^/]*)%.[^%.]*$")
+		       else
+			  return '<span color="white">MPD:</span> '..
+			     args["{Artist}"]..' - '.. args["{Title}"]
+		       end
+                    end
+                 end)
+
+local netwidget = wibox.widget.textbox()
+vicious.register(netwidget, vicious.widgets.net, 
+                 '<span color="green">${wlan0 down_mb}</span>/<span color="red">${wlan0 up_mb}</span>')
+
+
 -- panel.add_to_screen(s) add a panel to screen s
 -- panel has fields for the widgets in it eg. wibox, promptbox, ...
 -- this function returns the panel table
@@ -166,6 +206,8 @@ function tpanel.add_to_screen(s)
    panel.cpuwidgets = cpuwidgets
    panel.datewidget = datewidget
    panel.remotewidget = remotewidget
+   panel.mpdwidget = mpdwidget
+   panel.netwidget = netwidget
 
    -- Widgets that are aligned to the left
    local left_layout = wibox.layout.fixed.horizontal()
@@ -176,11 +218,13 @@ function tpanel.add_to_screen(s)
 
    -- Widgets that are aligned to the right
    local right_layout = wibox.layout.fixed.horizontal()
+   right_layout:add(panel.mpdwidget)
    if s == 1 then right_layout:add(wibox.widget.systray()) end
-   right_layout:add(panel.remotewidget)
+   -- right_layout:add(panel.remotewidget)
    for i = 1, #panel.cpuwidgets do
       right_layout:add(panel.cpuwidgets[i])
    end
+   right_layout:add(panel.netwidget)
    right_layout:add(panel.datewidget)
    right_layout:add(panel.layoutbox)
    panel.right_layout = right_layout

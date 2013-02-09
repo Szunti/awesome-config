@@ -1,7 +1,7 @@
 local r = require("utils.runonce")
 
 -- {{{ Programs
---r.run("mpd")
+r.run("mpd")
 r.run("xscreensaver -nosplash")
 --r.run("transmission-gtk -m")
 r.run("deluge")

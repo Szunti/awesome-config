@@ -78,6 +78,8 @@ for s = 1, screen.count() do
 end
 -- }}}
 
+local mymainmenu = require("menu")
+
 -- {{{ Mouse bindings
 root.buttons(awful.util.table.join(
     awful.button({ }, 3, function () mymainmenu:toggle() end),
